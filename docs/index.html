@@ -58,6 +58,8 @@ h1, h2, h3 { font-family: var(--display); text-wrap: balance; margin: 0; }
 
 /* Header */
 header.top { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 12px 24px; margin-bottom: 20px; }
+.home-link { display: inline-block; margin-bottom: 8px; font-size: 13px; font-weight: 600; color: var(--accent); text-decoration: none; }
+.home-link:hover { text-decoration: underline; }
 .brand h1 { font-size: clamp(28px, 5vw, 44px); line-height: 1; letter-spacing: -.01em; }
 .brand h1 em { font-style: normal; color: var(--accent); }
 .brand p { margin: 6px 0 0; color: var(--muted); }
@@ -197,6 +199,7 @@ footer { margin-top: 32px; font-size: 12px; color: var(--muted); max-width: 70ch
 <div class="wrap">
   <header class="top">
     <div class="brand">
+      <a id="home-link" class="home-link" href="https://wdcardshop.com/" target="_top" hidden>← Back to WD Card Shop</a>
       <h1>Build a <em>13-0</em> Team</h1>
       <p>Spin a region, draft a Pokémon for each role, then run the League: 8 Gyms, the Elite Four and the Champion.</p>
     </div>
@@ -353,6 +356,7 @@ function nextRegion() {
 
 // ---------- DOM ----------
 const $ = id => document.getElementById(id);
+if (new URLSearchParams(location.search).get("from") === "shop") $("home-link").hidden = false; // store embed only
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[c]));
 const typeChips = types => `<span class="types">${types.map(t => `<span class="t" style="background:${TYPE_COLORS[t]}">${t}</span>`).join("")}</span>`;
 const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
