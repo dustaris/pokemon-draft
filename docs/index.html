@@ -1,0 +1,636 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Spin a region, draft a Pokémon for every role, sign a trainer and try to go 13-0 through the League. An unofficial fan game.">
+<style>html{color-scheme:light}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+<meta charset="utf-8">
+<title>Build a 13-0 Team</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&family=Silkscreen&display=swap">
+<style>
+:root {
+  --bg: #F4F1F0;
+  --surface: #FFFFFF;
+  --surface-2: #EDE8E7;
+  --ink: #1C1B22;
+  --muted: #6C6570;
+  --line: #DCD4D3;
+  --accent: #D42A3C;
+  --accent-ink: #FFFFFF;
+  --win: #23905A;
+  --loss: #C73446;
+  --lcd-bg: #9BBC0F;
+  --lcd-mid: #8BAC0F;
+  --lcd-ink: #0F380F;
+  --lcd-dim: #306230;
+  --shadow: 0 1px 0 rgba(28,27,34,.06), 0 8px 24px -12px rgba(28,27,34,.25);
+  --display: "Chakra Petch", "Arial Narrow", system-ui, sans-serif;
+  --body: "IBM Plex Sans", system-ui, -apple-system, sans-serif;
+  --pixel: "Silkscreen", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #14151B; --surface: #1D1F27; --surface-2: #262833; --ink: #EDEAE8;
+    --muted: #9D97A2; --line: #33353F; --accent: #FF5064; --accent-ink: #1A0508;
+    --win: #45C07F; --loss: #FF6173;
+    --shadow: 0 1px 0 rgba(0,0,0,.3), 0 10px 28px -14px rgba(0,0,0,.7);
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #14151B; --surface: #1D1F27; --surface-2: #262833; --ink: #EDEAE8;
+  --muted: #9D97A2; --line: #33353F; --accent: #FF5064; --accent-ink: #1A0508;
+  --win: #45C07F; --loss: #FF6173;
+  --shadow: 0 1px 0 rgba(0,0,0,.3), 0 10px 28px -14px rgba(0,0,0,.7);
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.5 var(--body); padding: 0 16px; }
+.wrap { max-width: 1180px; margin: 0 auto; padding-block: 20px 48px; }
+button { font: inherit; color: inherit; cursor: pointer; }
+button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; margin: 0; }
+
+/* Header */
+header.top { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 12px 24px; margin-bottom: 20px; }
+.brand h1 { font-size: clamp(28px, 5vw, 44px); line-height: 1; letter-spacing: -.01em; }
+.brand h1 em { font-style: normal; color: var(--accent); }
+.brand p { margin: 6px 0 0; color: var(--muted); }
+.modes { display: flex; gap: 4px; background: var(--surface-2); padding: 4px; border-radius: 10px; }
+.modes button { border: 0; background: transparent; padding: 7px 14px; border-radius: 7px; font-weight: 600; font-size: 14px; color: var(--muted); }
+.modes button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: var(--shadow); }
+.best { font-size: 13px; color: var(--muted); width: 100%; text-align: right; font-variant-numeric: tabular-nums; }
+
+/* Layout */
+.game { display: grid; grid-template-columns: minmax(0, 1fr) 340px; grid-template-areas: "stage team" "picker team"; gap: 20px; align-items: start; }
+.stage { grid-area: stage; }
+.team { grid-area: team; position: sticky; top: calc(env(safe-area-inset-top, 0px) + 12px); }
+.picker { grid-area: picker; }
+@media (max-width: 860px) {
+  .game { grid-template-columns: minmax(0, 1fr); grid-template-areas: "stage" "team" "picker"; }
+  .team { position: static; }
+}
+
+/* Spin console: the one loud thing */
+.console { background: var(--accent); border-radius: 18px 18px 18px 56px; padding: 18px 20px 20px; box-shadow: var(--shadow); color: #fff; }
+.console-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+.lights { display: flex; gap: 8px; align-items: center; }
+.lights i { width: 12px; height: 12px; border-radius: 50%; background: #FFD34E; box-shadow: inset 0 -2px 0 rgba(0,0,0,.2); }
+.lights i:first-child { width: 26px; height: 26px; background: radial-gradient(circle at 35% 35%, #BFE9FF, #2E8BD6 60%, #1B5E9A); border: 3px solid #fff; }
+.lights i:nth-child(3) { background: #6FD06F; }
+.round-label { font-family: var(--pixel); font-size: 13px; letter-spacing: .06em; opacity: .95; }
+.screen { background: var(--lcd-bg); border-radius: 8px; border: 10px solid #2B2B33; padding: 14px 16px; color: var(--lcd-ink); display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 8px 16px; min-height: 108px; }
+.screen .eyebrow { font-family: var(--pixel); font-size: 11px; color: var(--lcd-dim); letter-spacing: .08em; }
+.screen .reel { font-family: var(--pixel); font-size: clamp(30px, 6vw, 48px); line-height: 1.05; }
+.screen .reel.spinning { filter: blur(.4px); opacity: .85; }
+.screen .sub { font-family: var(--pixel); font-size: 12px; color: var(--lcd-dim); }
+.console-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; align-items: center; }
+.btn { border: 0; border-radius: 999px; padding: 9px 16px; font-weight: 600; font-size: 14px; }
+.btn-light { background: #fff; color: #9E1627; }
+.btn-light:disabled { opacity: .5; cursor: not-allowed; }
+.btn-ghost { background: rgba(255,255,255,.16); color: #fff; }
+.console-hint { font-size: 13px; opacity: .9; margin-left: auto; }
+
+/* Team panel */
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px; }
+.panel h2 { font-size: 18px; display: flex; justify-content: space-between; align-items: baseline; }
+.panel h2 span { font-family: var(--body); font-size: 12px; color: var(--muted); font-weight: 500; }
+.slots { list-style: none; margin: 12px 0 0; padding: 0; display: grid; gap: 6px; }
+.slot { display: grid; grid-template-columns: 52px 1fr; align-items: center; gap: 10px; padding: 6px 8px 6px 6px; border-radius: 10px; background: var(--surface-2); min-height: 64px; }
+.slot .pic { width: 52px; height: 52px; border-radius: 8px; background: var(--bg); display: grid; place-items: center; font-family: var(--pixel); font-size: 11px; color: var(--muted); overflow: hidden; }
+.slot .pic img { width: 64px; height: 64px; image-rendering: pixelated; max-width: none; }
+.slot .role { font-size: 11px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); }
+.slot .who { font-weight: 600; line-height: 1.25; }
+.slot .who.empty { color: var(--muted); font-weight: 400; font-size: 13px; }
+.slot.filled { background: transparent; outline: 1px solid var(--line); }
+.slot.just { animation: pop .45s ease-out; }
+.slot.target { outline: 2px dashed var(--accent); background: transparent; }
+@keyframes pop { 0% { transform: scale(.96); background: color-mix(in srgb, var(--accent) 22%, transparent); } 100% { transform: none; } }
+
+/* Picker */
+.picker .panel { padding: 16px; }
+.pick-head { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.pick-head h2 { font-size: 20px; }
+.filters { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.filters input[type="search"], .filters select { background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 7px 10px; font: inherit; font-size: 14px; color: var(--ink); min-width: 0; }
+.filters input[type="search"] { width: 170px; }
+.filters label { font-size: 13px; color: var(--muted); display: flex; gap: 6px; align-items: center; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); gap: 8px; }
+.mon { position: relative; border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 6px 6px 8px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 2px; transition: transform .12s, border-color .12s; }
+.mon:hover:not(:disabled) { transform: translateY(-2px); border-color: var(--accent); }
+.mon:disabled { opacity: .35; cursor: not-allowed; }
+.mon[aria-pressed="true"] { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent); }
+.mon img { width: 80px; height: 80px; image-rendering: pixelated; margin: -6px 0 -8px; }
+.mon .nm { font-weight: 600; font-size: 13px; line-height: 1.2; }
+.mon .no { font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.mon .leg { position: absolute; top: 6px; right: 6px; font-family: var(--pixel); font-size: 9px; background: #F2C230; color: #3A2A00; padding: 1px 4px; border-radius: 3px; }
+.types { display: flex; gap: 3px; justify-content: center; flex-wrap: wrap; }
+.t { font-size: 10px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: #fff; padding: 1px 6px; border-radius: 4px; text-shadow: 0 1px 0 rgba(0,0,0,.25); }
+.empty-note { color: var(--muted); padding: 24px 4px; text-align: center; }
+
+/* Placement sheet */
+.sheet { position: sticky; bottom: calc(env(safe-area-inset-bottom, 0px) + 12px); margin-top: 12px; background: var(--ink); color: var(--bg); border-radius: 14px; padding: 12px 14px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; box-shadow: var(--shadow); z-index: 5; }
+.sheet img { width: 56px; height: 56px; image-rendering: pixelated; margin: -8px -4px; }
+.sheet .nm { font-family: var(--display); font-size: 18px; font-weight: 700; }
+.sheet .place { display: flex; flex-wrap: wrap; gap: 6px; margin-left: auto; }
+.sheet .place button { border: 1px solid color-mix(in srgb, var(--bg) 35%, transparent); background: transparent; color: var(--bg); border-radius: 999px; padding: 6px 12px; font-size: 13px; font-weight: 600; }
+.sheet .place button:hover { background: var(--accent); border-color: var(--accent); color: #fff; }
+.sheet .lbl { font-size: 12px; opacity: .7; width: 100%; }
+@media (min-width: 600px) { .sheet .lbl { width: auto; } }
+
+/* Trainer cards */
+.trainers { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; }
+.trainer { text-align: left; border: 1px solid var(--line); background: var(--surface); border-radius: 12px; padding: 12px 14px; display: grid; gap: 4px; }
+.trainer:hover { border-color: var(--accent); }
+.trainer .title { font-size: 11px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); }
+.trainer .nm { font-family: var(--display); font-size: 20px; font-weight: 700; }
+.trainer .fx { font-size: 13px; color: var(--muted); }
+.trainer .fx b { color: var(--ink); }
+.trainer.champ { border-color: color-mix(in srgb, #F2C230 70%, var(--line)); }
+
+/* Results */
+.results { display: grid; gap: 20px; }
+.hero { display: grid; grid-template-columns: auto 1fr; gap: 12px 28px; align-items: center; }
+.record { font-family: var(--pixel); font-size: clamp(64px, 14vw, 120px); line-height: .9; color: var(--accent); }
+.record.perfect { color: var(--win); }
+.verdict h2 { font-size: clamp(22px, 3.4vw, 30px); }
+.verdict p { margin: 6px 0 0; color: var(--muted); max-width: 52ch; }
+.ovr { display: inline-flex; gap: 8px; align-items: baseline; margin-top: 10px; font-family: var(--display); font-weight: 700; }
+.ovr b { font-size: 28px; }
+.ovr span { color: var(--muted); font-size: 13px; }
+@media (max-width: 560px) { .hero { grid-template-columns: 1fr; } }
+.run { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 6px; }
+.bout { border-radius: 8px; padding: 8px; border: 1px solid var(--line); font-size: 12px; display: grid; gap: 2px; }
+.bout .opp { font-weight: 600; font-size: 13px; }
+.bout .res { font-family: var(--pixel); font-size: 12px; }
+.bout.w .res { color: var(--win); }
+.bout.l { background: color-mix(in srgb, var(--loss) 10%, transparent); border-color: color-mix(in srgb, var(--loss) 45%, var(--line)); }
+.bout.l .res { color: var(--loss); }
+.bout .pct { color: var(--muted); font-variant-numeric: tabular-nums; }
+.breakdown { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 13px; font-variant-numeric: tabular-nums; }
+th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th { font-size: 11px; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+td.n { text-align: right; }
+td img { width: 40px; height: 40px; image-rendering: pixelated; vertical-align: middle; margin: -8px 0; }
+.grade { font-family: var(--pixel); font-size: 13px; }
+.g-S, .g-A { color: var(--win); } .g-D, .g-F { color: var(--loss); }
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+.fact { background: var(--surface-2); border-radius: 10px; padding: 12px 14px; }
+.fact .k { font-size: 11px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); }
+.fact .v { font-family: var(--display); font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.fact .d { font-size: 13px; color: var(--muted); }
+.res-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.btn-accent { background: var(--accent); color: var(--accent-ink); }
+.btn-plain { background: var(--surface-2); color: var(--ink); }
+.toast { font-size: 13px; color: var(--muted); }
+textarea.share { width: 100%; font: 12px/1.4 ui-monospace, monospace; background: var(--bg); color: var(--ink); border: 1px solid var(--line); border-radius: 8px; padding: 8px; }
+footer { margin-top: 32px; font-size: 12px; color: var(--muted); max-width: 70ch; }
+@media (prefers-reduced-motion: reduce) { .slot.just { animation: none; } .mon { transition: none; } }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <h1>Build a <em>13-0</em> Team</h1>
+      <p>Spin a region, draft a Pokémon for each role, then run the League: 8 Gyms, the Elite Four and the Champion.</p>
+    </div>
+    <div>
+      <div class="modes" role="group" aria-label="Game mode">
+        <button id="mode-classic" type="button" data-mode="classic">Classic</button>
+        <button id="mode-daily" type="button" data-mode="daily">Daily</button>
+      </div>
+    </div>
+    <div class="best" id="best"></div>
+  </header>
+
+  <main class="game" id="game">
+    <section class="stage" aria-live="polite">
+      <div class="console">
+        <div class="console-top">
+          <div class="lights" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+          <div class="round-label" id="round-label">ROUND 1/7</div>
+        </div>
+        <div class="screen">
+          <div>
+            <div class="eyebrow" id="reel-eyebrow">REGION</div>
+            <div class="reel" id="reel">KANTO</div>
+            <div class="sub" id="reel-sub">GEN I · #001–151</div>
+          </div>
+        </div>
+        <div class="console-actions">
+          <button class="btn btn-light" id="respin" type="button">Re-spin (1 left)</button>
+          <button class="btn btn-ghost" id="restart" type="button">New draft</button>
+          <span class="console-hint" id="hint">Pick one Pokémon from this region.</span>
+        </div>
+      </div>
+    </section>
+
+    <aside class="team panel">
+      <h2>Your team <span id="team-count">0/6 + trainer</span></h2>
+      <ul class="slots" id="slots"></ul>
+    </aside>
+
+    <section class="picker" id="picker"></section>
+  </main>
+
+  <footer>
+    Unofficial fan game. Pokémon and all related names and sprites are trademarks of Nintendo, Creatures Inc. and GAME FREAK inc. Sprite images via PokéAPI; base stats via Pokémon Showdown.
+  </footer>
+</div>
+
+<script src="dex.js"></script>
+<script src="sprites.js"></script>
+<script>
+(() => {
+// ---------- Static data ----------
+const REGIONS = [
+  { name: "Kanto",  gen: "I",    lo: 1,   hi: 151 },
+  { name: "Johto",  gen: "II",   lo: 152, hi: 251 },
+  { name: "Hoenn",  gen: "III",  lo: 252, hi: 386 },
+  { name: "Sinnoh", gen: "IV",   lo: 387, hi: 493 },
+  { name: "Unova",  gen: "V",    lo: 494, hi: 649 },
+  { name: "Kalos",  gen: "VI",   lo: 650, hi: 721 },
+  { name: "Alola",  gen: "VII",  lo: 722, hi: 809 },
+  { name: "Galar",  gen: "VIII", lo: 810, hi: 905 },
+  { name: "Paldea", gen: "IX",   lo: 906, hi: 1025 },
+];
+const TRAINERS = {
+  Kanto:  [["Brock","Rock"],["Misty","Water"],["Lt. Surge","Electric"],["Erika","Grass"],["Sabrina","Psychic"],["Blue",null]],
+  Johto:  [["Falkner","Flying"],["Whitney","Normal"],["Morty","Ghost"],["Jasmine","Steel"],["Clair","Dragon"],["Lance",null]],
+  Hoenn:  [["Roxanne","Rock"],["Flannery","Fire"],["Winona","Flying"],["Wallace","Water"],["Tate & Liza","Psychic"],["Steven",null]],
+  Sinnoh: [["Roark","Rock"],["Gardenia","Grass"],["Maylene","Fighting"],["Fantina","Ghost"],["Volkner","Electric"],["Cynthia",null]],
+  Unova:  [["Lenora","Normal"],["Elesa","Electric"],["Skyla","Flying"],["Brycen","Ice"],["Drayden","Dragon"],["Iris",null]],
+  Kalos:  [["Viola","Bug"],["Korrina","Fighting"],["Ramos","Grass"],["Valerie","Fairy"],["Wulfric","Ice"],["Diantha",null]],
+  Alola:  [["Hala","Fighting"],["Olivia","Rock"],["Nanu","Dark"],["Hapu","Ground"],["Acerola","Ghost"],["Kukui",null]],
+  Galar:  [["Nessa","Water"],["Kabu","Fire"],["Bea","Fighting"],["Piers","Dark"],["Raihan","Dragon"],["Leon",null]],
+  Paldea: [["Katy","Bug"],["Iono","Electric"],["Grusha","Ice"],["Larry","Normal"],["Tulip","Psychic"],["Geeta",null]],
+};
+const TYPE_COLORS = { Normal:"#9A9A6E", Fire:"#E0701F", Water:"#4B7BE0", Electric:"#D4A800", Grass:"#5FA83A", Ice:"#5EB8B4",
+  Fighting:"#B42B25", Poison:"#8E3C92", Ground:"#C79B45", Flying:"#8C74DC", Psychic:"#E6446F", Bug:"#8C9A1A",
+  Rock:"#A48B30", Ghost:"#6A5690", Dragon:"#5B2EE8", Dark:"#5E4D40", Steel:"#8E8EA8", Fairy:"#D8739A" };
+const TYPES = Object.keys(TYPE_COLORS);
+// attacker -> [super effective], [not very effective], [no effect]
+const CHART = {
+  Normal:   [[], ["Rock","Steel"], ["Ghost"]],
+  Fire:     [["Grass","Ice","Bug","Steel"], ["Fire","Water","Rock","Dragon"], []],
+  Water:    [["Fire","Ground","Rock"], ["Water","Grass","Dragon"], []],
+  Electric: [["Water","Flying"], ["Electric","Grass","Dragon"], ["Ground"]],
+  Grass:    [["Water","Ground","Rock"], ["Fire","Grass","Poison","Flying","Bug","Dragon","Steel"], []],
+  Ice:      [["Grass","Ground","Flying","Dragon"], ["Fire","Water","Ice","Steel"], []],
+  Fighting: [["Normal","Ice","Rock","Dark","Steel"], ["Poison","Flying","Psychic","Bug","Fairy"], ["Ghost"]],
+  Poison:   [["Grass","Fairy"], ["Poison","Ground","Rock","Ghost"], ["Steel"]],
+  Ground:   [["Fire","Electric","Poison","Rock","Steel"], ["Grass","Bug"], ["Flying"]],
+  Flying:   [["Grass","Fighting","Bug"], ["Electric","Rock","Steel"], []],
+  Psychic:  [["Fighting","Poison"], ["Psychic","Steel"], ["Dark"]],
+  Bug:      [["Grass","Psychic","Dark"], ["Fire","Fighting","Poison","Flying","Ghost","Steel","Fairy"], []],
+  Rock:     [["Fire","Ice","Flying","Bug"], ["Fighting","Ground","Steel"], []],
+  Ghost:    [["Psychic","Ghost"], ["Dark"], ["Normal"]],
+  Dragon:   [["Dragon"], ["Steel"], ["Fairy"]],
+  Dark:     [["Psychic","Ghost"], ["Fighting","Dark","Fairy"], []],
+  Steel:    [["Ice","Rock","Fairy"], ["Fire","Water","Electric","Steel"], []],
+  Fairy:    [["Fighting","Dragon","Dark"], ["Fire","Poison","Steel"], []],
+};
+function eff(atk, def) {
+  const [se, nve, imm] = CHART[atk];
+  return imm.includes(def) ? 0 : se.includes(def) ? 2 : nve.includes(def) ? .5 : 1;
+}
+const mult = (atk, types) => types.reduce((m, d) => m * eff(atk, d), 1);
+
+// Roles: raw stat blend -> 0..100 fit
+const lin = (x, lo, hi) => Math.max(0, Math.min(100, (x - lo) / (hi - lo) * 100));
+const bst = s => s.reduce((a, b) => a + b, 0);
+const ROLES = [
+  { id: "phys",   name: "Physical Sweeper", hint: "Attack + Speed",     fit: s => lin(.6*s[1] + .4*s[5], 45, 125) },
+  { id: "spec",   name: "Special Sweeper",  hint: "Sp. Atk + Speed",    fit: s => lin(.6*s[3] + .4*s[5], 45, 125) },
+  { id: "tank",   name: "Tank",             hint: "HP + Def + Sp. Def", fit: s => lin((s[0] + s[2] + s[4]) / 3, 50, 115) },
+  { id: "speed",  name: "Speedster",        hint: "Speed",              fit: s => lin(.75*s[5] + .25*Math.max(s[1], s[3]), 45, 125) },
+  { id: "ace",    name: "Ace",              hint: "Base stat total",    fit: s => lin(bst(s), 300, 600) },
+  { id: "legend", name: "Legend",           hint: "Legendary, Mythical, Ultra Beast or Paradox only", fit: s => lin(bst(s), 480, 680), legend: true },
+];
+const LEAGUE = [
+  ["Gym 1",62],["Gym 2",66],["Gym 3",70],["Gym 4",74],["Gym 5",78],["Gym 6",82],["Gym 7",85],["Gym 8",88],
+  ["Elite Four 1",90],["Elite Four 2",91],["Elite Four 3",92],["Elite Four 4",93],["Champion",95],
+];
+const ROUNDS = 7; // six Pokémon + one trainer
+
+// ---------- Data ----------
+const DEX = window.DEX.map(([num, name, types, stats, legend]) => ({ num, name, types, stats, legend: !!legend }));
+const byNum = n => DEX[n - 1];
+const sprite = n => "data:image/png;base64," + window.SPRITES[n - 1];
+const NFE = new Set(window.NFE || []); // dex numbers that can still evolve (built into dex.js)
+
+// ---------- RNG ----------
+function mulberry32(a) { return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+function hashStr(s) { let h = 2166136261; for (const c of s) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; }
+const today = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; };
+
+// ---------- Storage (optional) ----------
+const store = {
+  get(k) { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
+};
+
+// ---------- State ----------
+let S;
+function newGame(mode) {
+  const seed = mode === "daily" ? hashStr("daily-" + today()) : (Math.random() * 2**32) >>> 0;
+  S = { mode, seed, spinCount: 0, round: 0, region: null, slots: {}, trainer: null, respins: 1,
+        selected: null, phase: "spinning", search: "", type: "", evolvedOnly: true, lastPlaced: null };
+  spin();
+}
+// Spins are derived from (seed, spinCount) so the Daily draft is identical for everyone.
+function nextRegion() {
+  const r = mulberry32(S.seed + S.spinCount * 7919)();
+  S.spinCount++;
+  return REGIONS[Math.floor(r * REGIONS.length)];
+}
+
+// ---------- DOM ----------
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[c]));
+const typeChips = types => `<span class="types">${types.map(t => `<span class="t" style="background:${TYPE_COLORS[t]}">${t}</span>`).join("")}</span>`;
+const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+let spinTimer = null;
+function spin() {
+  S.phase = "spinning"; S.selected = null;
+  const target = nextRegion();
+  const isTrainer = S.round === ROUNDS - 1;
+  render();
+  const reel = $("reel");
+  $("reel-eyebrow").textContent = isTrainer ? "TRAINER REGION" : "REGION";
+  const TICKS = 16, start = REGIONS.indexOf(target) - (TICKS - 1) + REGIONS.length * 2;
+  let i = 0, delay = 40;
+  clearTimeout(spinTimer);
+  const finish = () => { reel.classList.remove("spinning"); S.region = target; S.phase = "picking"; render(); };
+  if (reduceMotion) return finish();
+  reel.classList.add("spinning");
+  const tick = () => {
+    const r = REGIONS[(start + i) % REGIONS.length];
+    reel.textContent = r.name.toUpperCase();
+    $("reel-sub").textContent = `GEN ${r.gen} · #${String(r.lo).padStart(3,"0")}–${r.hi}`;
+    if (++i >= TICKS) return setTimeout(finish, 250);
+    delay *= 1.13;
+    spinTimer = setTimeout(tick, delay);
+  };
+  tick();
+}
+
+function openRoles(mon) {
+  if (Object.values(S.slots).includes(mon.num)) return [];
+  return ROLES.filter(r => !S.slots[r.id] && (!!r.legend === mon.legend));
+}
+
+function renderStage() {
+  const pokeRound = S.round < ROUNDS - 1;
+  $("round-label").textContent = S.phase === "done" ? "LEAGUE COMPLETE" : `ROUND ${S.round + 1}/${ROUNDS}`;
+  if (S.region && S.phase !== "spinning") {
+    $("reel").textContent = S.region.name.toUpperCase();
+    $("reel-sub").textContent = `GEN ${S.region.gen} · #${String(S.region.lo).padStart(3,"0")}–${S.region.hi}`;
+    $("reel-eyebrow").textContent = pokeRound ? "REGION" : "TRAINER REGION";
+  }
+  const rs = $("respin");
+  rs.textContent = `Re-spin (${S.respins} left)`;
+  rs.disabled = S.respins < 1 || S.phase !== "picking";
+  rs.hidden = S.phase === "done";
+  $("hint").textContent = S.phase === "done" ? `${S.mode === "daily" ? "Daily draft " + today() : "Classic draft"} finished.`
+    : S.phase === "spinning" ? "Spinning…"
+    : pokeRound ? `Pick one ${S.region.name} Pokémon.` : `Sign a ${S.region.name} trainer.`;
+}
+
+function renderSlots() {
+  const filled = ROLES.filter(r => S.slots[r.id]).length;
+  $("team-count").textContent = `${filled}/6 + trainer`;
+  const sel = S.selected ? byNum(S.selected) : null;
+  const targets = sel ? new Set(openRoles(sel).map(r => r.id)) : new Set();
+  $("slots").innerHTML = ROLES.map(r => {
+    const n = S.slots[r.id], m = n && byNum(n);
+    return `<li class="slot ${m ? "filled" : ""} ${targets.has(r.id) ? "target" : ""} ${S.lastPlaced === r.id ? "just" : ""}">
+      <div class="pic">${m ? `<img src="${sprite(n)}" alt="">` : "OPEN"}</div>
+      <div><div class="role">${r.name}</div>
+      ${m ? `<div class="who">${esc(m.name)}</div>${typeChips(m.types)}` : `<div class="who empty">${esc(r.hint)}</div>`}</div></li>`;
+  }).join("") + (() => {
+    const t = S.trainer;
+    return `<li class="slot ${t ? "filled" : ""} ${S.lastPlaced === "trainer" ? "just" : ""}">
+      <div class="pic">${t ? (t.type ? `<span class="t" style="background:${TYPE_COLORS[t.type]}">${t.type.slice(0,3)}</span>` : "★") : "OPEN"}</div>
+      <div><div class="role">Trainer</div>
+      ${t ? `<div class="who">${esc(t.name)}</div><div class="who empty">${t.type ? t.type + " specialist" : "Champion"} · ${t.region}</div>` : `<div class="who empty">Final round: a Gym Leader or Champion</div>`}</div></li>`;
+  })();
+  S.lastPlaced = null;
+}
+
+function renderPicker() {
+  const el = $("picker");
+  if (S.phase === "done") { el.innerHTML = renderResults(); bindResults(); return; }
+  if (S.phase === "spinning" || !S.region) { el.innerHTML = `<div class="panel"><p class="empty-note">Spinning the region…</p></div>`; return; }
+  if (S.round === ROUNDS - 1) { renderTrainerPick(el); return; }
+
+  const q = S.search.trim().toLowerCase();
+  const list = DEX.slice(S.region.lo - 1, S.region.hi).filter(m =>
+    (!q || m.name.toLowerCase().includes(q)) && (!S.type || m.types.includes(S.type)) && (!S.evolvedOnly || m.legend || !NFE.has(m.num)));
+  const sel = S.selected ? byNum(S.selected) : null;
+  el.innerHTML = `<div class="panel">
+    <div class="pick-head">
+      <h2>${S.region.name} Pokédex</h2>
+      <div class="filters">
+        <input id="q" type="search" placeholder="Search name" value="${esc(S.search)}" aria-label="Search Pokémon">
+        <select id="tf" aria-label="Filter by type"><option value="">All types</option>${TYPES.map(t => `<option ${S.type === t ? "selected" : ""}>${t}</option>`).join("")}</select>
+        ${NFE.size ? `<label><input id="ev" type="checkbox" ${S.evolvedOnly ? "checked" : ""}> Fully evolved</label>` : ""}
+      </div>
+    </div>
+    ${list.length ? `<div class="grid">${list.map(m => {
+      const ok = openRoles(m).length > 0;
+      return `<button class="mon" type="button" data-n="${m.num}" ${ok ? "" : "disabled"} aria-pressed="${S.selected === m.num}"
+        title="${ok ? "" : Object.values(S.slots).includes(m.num) ? "Already on your team" : m.legend ? "Legend slot is taken" : "Only the Legend slot is open"}">
+        ${m.legend ? `<span class="leg">LEGEND</span>` : ""}
+        <img src="${sprite(m.num)}" alt="" loading="lazy">
+        <span class="no">#${String(m.num).padStart(3,"0")}</span><span class="nm">${esc(m.name)}</span>${typeChips(m.types)}</button>`;
+    }).join("")}</div>` : `<p class="empty-note">No ${S.region.name} Pokémon match that search.</p>`}
+    ${sel ? `<div class="sheet" id="sheet">
+      <img src="${sprite(sel.num)}" alt=""><div><div class="nm">${esc(sel.name)}</div>${typeChips(sel.types)}</div>
+      <span class="lbl">Place in:</span>
+      <div class="place">${openRoles(sel).map(r => `<button type="button" data-role="${r.id}">${r.name}</button>`).join("")}</div>
+    </div>` : ""}
+  </div>`;
+
+  const qi = $("q");
+  qi.addEventListener("input", e => { S.search = e.target.value; renderPicker(); const n = $("q"); n.focus(); n.setSelectionRange(n.value.length, n.value.length); });
+  $("tf").addEventListener("change", e => { S.type = e.target.value; renderPicker(); });
+  $("ev")?.addEventListener("change", e => { S.evolvedOnly = e.target.checked; renderPicker(); });
+  el.querySelectorAll(".mon").forEach(b => b.addEventListener("click", () => {
+    const n = +b.dataset.n; S.selected = S.selected === n ? null : n;
+    const roles = S.selected ? openRoles(byNum(n)) : [];
+    if (roles.length === 1 && ROLES.filter(r => !S.slots[r.id]).length === 1) return place(roles[0].id);
+    renderSlots(); renderPicker();
+    $("sheet")?.scrollIntoView({ block: "nearest", behavior: reduceMotion ? "auto" : "smooth" });
+  }));
+  el.querySelectorAll("[data-role]").forEach(b => b.addEventListener("click", () => place(b.dataset.role)));
+}
+
+function place(roleId) {
+  S.slots[roleId] = S.selected; S.lastPlaced = roleId;
+  S.selected = null; S.search = ""; S.type = "";
+  advance();
+}
+
+function trainerEffect(t) {
+  if (!t.type) return { text: `Champion: <b>+3.5 OVR</b> to the whole team`, bonus: 3.5 };
+  const count = ROLES.filter(r => S.slots[r.id] && byNum(S.slots[r.id]).types.includes(t.type)).length;
+  const bonus = Math.min(6, count * 1.25);
+  return { text: `<b>+1.25 OVR</b> per ${t.type}-type on your team (you have ${count} → <b>+${bonus.toFixed(2).replace(/\.?0+$/,"")}</b>)`, bonus };
+}
+
+function renderTrainerPick(el) {
+  const list = TRAINERS[S.region.name].map(([name, type]) => ({ name, type, region: S.region.name }));
+  el.innerHTML = `<div class="panel">
+    <div class="pick-head"><h2>${S.region.name} trainers</h2><span class="toast">Your trainer's bonus counts toward every battle.</span></div>
+    <div class="trainers">${list.map((t, i) => `<button type="button" class="trainer ${t.type ? "" : "champ"}" data-i="${i}">
+      <span class="title">${t.type ? "Gym Leader" : "Champion"}</span>
+      <span class="nm">${esc(t.name)}</span>
+      ${t.type ? `<span>${typeChips([t.type])}</span>` : ""}
+      <span class="fx">${trainerEffect(t).text}</span></button>`).join("")}</div></div>`;
+  el.querySelectorAll(".trainer").forEach(b => b.addEventListener("click", () => {
+    S.trainer = list[+b.dataset.i]; S.lastPlaced = "trainer"; advance();
+  }));
+}
+
+function advance() {
+  S.round++;
+  if (S.round >= ROUNDS) { finish(); return; }
+  S.phase = "spinning"; // lock the grid until the next region lands
+  render();
+  setTimeout(spin, reduceMotion ? 0 : 350);
+}
+
+// ---------- Scoring & simulation ----------
+function evaluate() {
+  const team = ROLES.map(r => { const m = byNum(S.slots[r.id]); return { role: r, mon: m, fit: r.fit(m.stats) }; });
+  const avgFit = team.reduce((a, x) => a + x.fit, 0) / team.length;
+  const stab = new Set(team.flatMap(x => x.mon.types));
+  const covered = TYPES.filter(d => [...stab].some(a => eff(a, d) === 2));
+  const coverage = Math.max(0, covered.length - 8) * 0.8;
+  const weak = [];
+  let penalty = 0;
+  for (const a of TYPES) {
+    let w = 0, r = 0;
+    for (const x of team) { const m = mult(a, x.mon.types); if (m > 1) w++; else if (m < 1) r++; }
+    const net = w - r;
+    if (net >= 2) { weak.push({ type: a, net }); penalty += (net - 1) * 1.0; }
+  }
+  penalty = Math.min(10, penalty);
+  const trainer = trainerEffect(S.trainer);
+  const ovr = 40 + 0.5 * avgFit + coverage + trainer.bonus - penalty;
+  return { team, avgFit, covered, coverage, weak: weak.sort((a, b) => b.net - a.net), penalty, trainer, ovr };
+}
+function simulate(ovr) {
+  const key = ROLES.map(r => S.slots[r.id]).join(",") + "|" + S.trainer.name + "|" + (S.mode === "daily" ? today() : S.seed);
+  const rng = mulberry32(hashStr(key));
+  return LEAGUE.map(([name, opp]) => { const p = 1 / (1 + Math.exp(-(ovr - opp) / 3)); return { name, opp, p, win: rng() < p }; });
+}
+const grade = f => f >= 90 ? "S" : f >= 80 ? "A" : f >= 68 ? "B" : f >= 55 ? "C" : f >= 40 ? "D" : "F";
+
+function finish() {
+  S.phase = "done";
+  S.result = evaluate();
+  S.run = simulate(S.result.ovr);
+  const wins = S.run.filter(b => b.win).length;
+  const bestKey = "best-" + S.mode, prev = store.get(bestKey);
+  if (!prev || wins > prev.wins || (wins === prev.wins && S.result.ovr > prev.ovr)) store.set(bestKey, { wins, ovr: S.result.ovr });
+  if (S.mode === "daily") store.set("daily-" + today(), { wins, ovr: S.result.ovr });
+  render();
+  window.scrollTo({ top: 0, behavior: reduceMotion ? "auto" : "smooth" });
+}
+
+function verdict(w) {
+  if (w === 13) return ["Perfect run. League Champion.", "Every Gym, all four of the Elite Four and the Champion. Your name goes in the Hall of Fame."];
+  if (w === 12) return ["One battle from immortality.", "A single loss kept this team out of the Hall of Fame. Tighten the weakest role and run it back."];
+  if (w >= 10) return ["Elite Four contender.", "Strong enough to reach the top, not quite strong enough to stay there."];
+  if (w >= 7) return ["Badge collector.", "This team clears most of the Gym circuit and runs out of steam at the Elite Four."];
+  return ["Back to Route 1.", "The roles and the Pokémon aren't lining up yet. Sweepers need Attack or Sp. Atk plus Speed; the Tank needs bulk."];
+}
+
+function renderResults() {
+  const R = S.result, run = S.run, wins = run.filter(b => b.win).length;
+  const [h, p] = verdict(wins);
+  const statNames = ["HP","Atk","Def","SpA","SpD","Spe"];
+  return `<div class="results">
+    <div class="panel hero">
+      <div class="record ${wins === 13 ? "perfect" : ""}">${wins}-${13 - wins}</div>
+      <div class="verdict"><h2>${h}</h2><p>${p}</p>
+        <div class="ovr"><b>${R.ovr.toFixed(1)}</b><span>TEAM OVR · Champion is rated 95</span></div></div>
+    </div>
+    <div class="panel"><h2 style="font-size:18px;margin-bottom:10px">League run</h2>
+      <div class="run">${run.map(b => `<div class="bout ${b.win ? "w" : "l"}"><span class="opp">${b.name}</span>
+        <span class="res">${b.win ? "WIN" : "LOSS"}</span><span class="pct">${Math.round(b.p * 100)}% to win</span></div>`).join("")}</div>
+    </div>
+    <div class="facts">
+      <div class="fact"><div class="k">Role fit</div><div class="v">${R.avgFit.toFixed(0)}/100</div><div class="d">Average across the six roles: <b>+${(R.avgFit/2).toFixed(1)}</b> OVR</div></div>
+      <div class="fact"><div class="k">Type coverage</div><div class="v">${R.covered.length}/18</div><div class="d">Types your STAB moves hit super-effectively: <b>+${R.coverage.toFixed(1)}</b></div></div>
+      <div class="fact"><div class="k">Shared weaknesses</div><div class="v">${R.weak.length ? "−" + R.penalty.toFixed(1) : "None"}</div><div class="d">${R.weak.length ? R.weak.map(w => `${w.type} (${w.net} net)`).join(", ") : "No type hits 2+ more of your team than it's resisted by."}</div></div>
+      <div class="fact"><div class="k">Trainer</div><div class="v">+${R.trainer.bonus.toFixed(1)}</div><div class="d">${esc(S.trainer.name)} · ${S.trainer.type ? S.trainer.type + " specialist" : "Champion"}</div></div>
+    </div>
+    <div class="panel breakdown"><table>
+      <thead><tr><th>Role</th><th></th><th>Pokémon</th><th>Fit</th>${statNames.map(s => `<th class="n">${s}</th>`).join("")}<th class="n">BST</th></tr></thead>
+      <tbody>${R.team.map(x => `<tr><td>${x.role.name}</td><td><img src="${sprite(x.mon.num)}" alt=""></td><td>${esc(x.mon.name)}</td>
+        <td><span class="grade g-${grade(x.fit)}">${grade(x.fit)}</span> ${x.fit.toFixed(0)}</td>
+        ${x.mon.stats.map(v => `<td class="n">${v}</td>`).join("")}<td class="n">${bst(x.mon.stats)}</td></tr>`).join("")}</tbody>
+    </table></div>
+    <div class="res-actions">
+      <button class="btn btn-accent" id="again" type="button">${S.mode === "daily" ? "Play Classic" : "Draft again"}</button>
+      <button class="btn btn-plain" id="share" type="button">Copy result</button>
+      <span class="toast" id="toast"></span>
+    </div>
+  </div>`;
+}
+function shareText() {
+  const wins = S.run.filter(b => b.win).length;
+  return `Build a 13-0 Team (Pokémon) · ${S.mode === "daily" ? "Daily " + today() : "Classic"}\n` +
+    `${wins}-${13 - wins} · OVR ${S.result.ovr.toFixed(1)}\n` +
+    S.run.map(b => b.win ? "🟩" : "🟥").join("") + "\n" +
+    ROLES.map(r => byNum(S.slots[r.id]).name).join(" · ") + ` · Trainer ${S.trainer.name}`;
+}
+function bindResults() {
+  $("again").addEventListener("click", () => { setMode("classic"); });
+  $("share").addEventListener("click", async () => {
+    const txt = shareText();
+    try { await navigator.clipboard.writeText(txt); $("toast").textContent = "Copied to clipboard."; }
+    catch { $("toast").innerHTML = `<textarea class="share" rows="4" id="share-text" readonly>${esc(txt)}</textarea>`; $("share-text").select(); }
+  });
+}
+
+function renderBest() {
+  const b = store.get("best-" + S.mode);
+  const d = S.mode === "daily" ? store.get("daily-" + today()) : null;
+  $("best").textContent = (b ? `Best ${S.mode === "daily" ? "Daily" : "Classic"}: ${b.wins}-${13 - b.wins}` : `Best ${S.mode === "daily" ? "Daily" : "Classic"}: none yet`) +
+    (d ? ` · Today: ${d.wins}-${13 - d.wins}` : "");
+}
+
+function render() {
+  document.querySelectorAll(".modes button").forEach(b => b.setAttribute("aria-pressed", b.dataset.mode === S.mode));
+  renderStage(); renderSlots(); renderPicker(); renderBest();
+}
+
+function setMode(mode) { clearTimeout(spinTimer); newGame(mode); }
+document.querySelectorAll(".modes button").forEach(b => b.addEventListener("click", () => setMode(b.dataset.mode)));
+$("respin").addEventListener("click", () => { if (S.respins > 0 && S.phase === "picking") { S.respins--; spin(); } });
+$("restart").addEventListener("click", () => setMode(S.mode));
+
+// Keep an in-progress draft across page updates.
+const hot = window.claude?.hot;
+hot?.snapshot?.(() => S);
+const start = data => {
+  if (data && data.slots && data.phase !== "spinning") { S = data; render(); }
+  else newGame("classic");
+};
+hot?.ready ? hot.ready(start) : start(hot?.data ?? {});
+})();
+</script>
+
+</body>
+</html>
